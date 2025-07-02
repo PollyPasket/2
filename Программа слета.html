@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Программа мероприятия</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+            padding: 15px;
+            position: relative;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .logo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            opacity: 0.7;
+            z-index: 10;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff8c00, #ff0080, #00ccff);
+        }
+
+        .days-nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .day-tab {
+            background: white;
+            color: #1a2a6c;
+            min-width: 80px;
+            text-align: center;
+            padding: 12px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            flex: 1;
+            user-select: none;
+        }
+
+        .day-tab:active {
+            transform: scale(0.98);
+        }
+
+        .day-tab:hover, .day-tab:focus {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .day-tab.active {
+            background: #ff8c00;
+            color: white;
+            box-shadow: 0 0 12px rgba(255, 140, 0, 0.7);
+        }
+
+        .program-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #ff8c00;
+        }
+
+        .program-header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .program-header h2 {
+            font-size: 24px;
+            color: #ff8c00;
+        }
+
+        .event-list {
+            list-style: none;
+        }
+
+        .event-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #ff8c00;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .event-item.clickable {
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .event-item.clickable:active {
+            transform: scale(0.98);
+        }
+
+        .event-item.clickable:hover, .event-item.clickable:focus {
+            background: rgba(255, 140, 0, 0.2);
+            transform: translateX(5px);
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 4px;
+            font-size: 16px;
+        }
+
+        .event-title {
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+            border: 2px solid #ff8c00;
+            transform: scale(0.9);
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #ff8c00;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            z-index: 1100;
+            user-select: none;
+        }
+
+        .modal-close:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ff8c00;
+        }
+
+        .modal-header h3 {
+            font-size: 24px;
+            color: #ffcc00;
+            line-height: 1.3;
+        }
+
+        .modal-body {
+            font-size: 17px;
+        }
+
+        .modal-info {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+
+        .modal-label {
+            font-weight: bold;
+            color: #ff8c00;
+            margin-right: 8px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .no-program {
+            text-align: center;
+            padding: 30px 15px;
+            font-size: 20px;
+            color: #ffcc00;
+            line-height: 1.5;
+        }
+
+        /* Адаптация для мобильных */
+        @media (max-width: 768px) {
+            .container {
+                margin: 30px auto;
+                padding: 15px;
+            }
+            
+            .logo {
+                font-size: 18px;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .program-header h1 {
+                font-size: 24px;
+            }
+            
+            .program-header h2 {
+                font-size: 22px;
+            }
+            
+            .event-time {
+                font-size: 15px;
+            }
+            
+            .event-title {
+                font-size: 16px;
+            }
+            
+            .day-tab {
+                padding: 10px 5px;
+                font-size: 13px;
+                min-width: 70px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .modal-header h3 {
+                font-size: 22px;
+            }
+            
+            .modal-body {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                margin: 20px auto;
+                padding: 12px;
+            }
+            
+            .days-nav {
+                gap: 8px;
+            }
+            
+            .day-tab {
+                padding: 8px 4px;
+                font-size: 12px;
+                min-width: 65px;
+                border-radius: 8px;
+            }
+            
+            .program-header h1 {
+                font-size: 22px;
+            }
+            
+            .program-header h2 {
+                font-size: 20px;
+            }
+            
+            .event-item {
+                padding: 10px;
+            }
+            
+            .event-title {
+                font-size: 15px;
+            }
+            
+            .modal-header h3 {
+                font-size: 20px;
+            }
+            
+            .modal-close {
+                width: 35px;
+                height: 35px;
+                font-size: 24px;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .day-tab {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .event-item {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        /* Скрытие неактивных дней */
+        .day-program {
+            display: none;
+        }
+        
+        .day-program.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">МОЛОДЁЖЬ СКЖД</div>
+    
+    <div class="container">
+        <div class="days-nav">
+            <div class="day-tab active" data-day="8">8 июля</div>
+            <div class="day-tab" data-day="9">9 июля</div>
+            <div class="day-tab" data-day="10">10 июля</div>
+            <div class="day-tab" data-day="11">11 июля</div>
+        </div>
+        
+        <div class="program-content">
+            <!-- Контент для 8 июля -->
+            <div class="day-program active" data-day="8">
+                <div class="program-header">
+                    <h1>ПРОГРАММА</h1>
+                    <h2>8 июля</h2>
+                </div>
+                
+                <ul class="event-list">
+                    <li class="event-item">
+                        <div class="event-time">11:00 – 13:00</div>
+                        <div class="event-title">Заезд участников, заселение, регистрация</div>
+                    </li>
+                    <li class="event-item">
+                        <div class="event-time">13:00 – 14:00</div>
+                        <div class="event-title">Обед</div>
+                    </li>
+                    <li class="event-item clickable" 
+                        data-time="14:00 – 14:45"
+                        data-title="Официальная церемония открытия"
+                        data-place="большой зал"
+                        data-speaker="ДЦОМП">
+                        <div class="event-time">14:00 – 14:45</div>
+                        <div class="event-title">Официальная церемония открытия</div>
+                    </li>
+                    <li class="event-item">
+                        <div class="event-time">14:45 – 15:00</div>
+                        <div class="event-title">Общее фотографирование</div>
+                    </li>
+                    <li class="event-item">
+                        <div class="event-time">15:00 – 15:30</div>
+                        <div class="event-title">Перерыв</div>
+                    </li>
+                    <li class="event-item clickable" 
+                        data-time="15:30 – 18:30"
+                        data-title="Командообразующее мероприятие: «Военно-патриотическая игра «Зарница»»"
+                        data-place="территория отеля">
+                        <div class="event-time">15:30 – 18:30</div>
+                        <div class="event-title">Командообразующее мероприятие: «Военно-патриотическая игра «Зарница»»</div>
+                    </li>
+                    <li class="event-item">
+                        <div class="event-time">18:30 – 19:30</div>
+                        <div class="event-title">Ужин (полевая кухня)</div>
+                    </li>
+                    <li class="event-item clickable" 
+                        data-time="19:30 – 21:30"
+                        data-title="Работа в группах по направлениям: Установка на работу потока"
+                        data-place="паровозный зал"
+                        data-speaker="куратор">
+                        <div class="event-time">19:30 – 21:30</div>
+                        <div class="event-title">Работа в группах по направлениям: Установка на работу потока (знакомство, сбор ожиданий, цели и задачи потока)</div>
+                    </li>
+                    <li class="event-item">
+                        <div class="event-time">21:30 – 21:45</div>
+                        <div class="event-title">Перерыв</div>
+                    </li>
+                    <li class="event-item clickable" 
+                        data-time="21:45 – 23:15"
+                        data-title="Мотивационная сессия «Действуй сейчас»"
+                        data-place="большой зал"
+                        data-speaker="А.Л.Казимов">
+                        <div class="event-time">21:45 – 23:15</div>
+                        <div class="event-title">Мотивационная сессия «Действуй сейчас»</div>
+                    </li>
+                    <li class="event-item clickable" 
+                        data-time="23:15 – 23:30"
+                        data-title="Организационное собрание"
+                        data-place="большой зал"
+                        data-speaker="ДЦОМП">
+                        <div class="event-time">23:15 – 23:30</div>
+                        <div class="event-title">Организационное собрание</div>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Контент для других дней -->
+            <div class="day-program" data-day="9">
+                <div class="program-header">
+                    <h1>ПРОГРАММА</h1>
+                    <h2>9 июля</h2>
+                </div>
+                <div class="no-program">Программа будет доступна позже</div>
+            </div>
+            
+            <div class="day-program" data-day="10">
+                <div class="program-header">
+                    <h1>ПРОГРАММА</h1>
+                    <h2>10 июля</h2>
+                </div>
+                <div class="no-program">Программа будет доступна позже</div>
+            </div>
+            
+            <div class="day-program" data-day="11">
+                <div class="program-header">
+                    <h1>ПРОГРАММА</h1>
+                    <h2>11 июля</h2>
+                </div>
+                <div class="no-program">Программа будет доступна позже</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-close">&times;</div>
+            <div class="modal-header">
+                <h3 id="modal-title"></h3>
+            </div>
+            <div class="modal-body">
+                <div class="modal-info">
+                    <span class="modal-label">Время:</span>
+                    <span id="modal-time"></span>
+                </div>
+                <div class="modal-info">
+                    <span class="modal-label">Место проведения:</span>
+                    <span id="modal-place"></span>
+                </div>
+                <div class="modal-info" id="speaker-info">
+                    <span class="modal-label">Спикер:</span>
+                    <span id="modal-speaker"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Исправления для iOS
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        // Переключение между днями
+        const dayTabs = document.querySelectorAll('.day-tab');
+        const dayPrograms = document.querySelectorAll('.day-program');
+        
+        // Функция переключения дней
+        function switchDay(day) {
+            // Убираем активный класс у всех вкладок
+            dayTabs.forEach(t => t.classList.remove('active'));
+            // Добавляем активный класс текущей вкладке
+            document.querySelector(`.day-tab[data-day="${day}"]`).classList.add('active');
+            
+            // Скрываем все программы
+            dayPrograms.forEach(program => {
+                program.classList.remove('active');
+            });
+            
+            // Показываем выбранную программу
+            document.querySelector(`.day-program[data-day="${day}"]`).classList.add('active');
+        }
+        
+        // Обработчики для вкладок дней
+        dayTabs.forEach(tab => {
+            // Обработка клика/касания
+            tab.addEventListener('click', () => switchDay(tab.dataset.day));
+            
+            // Для iOS добавляем обработчик touchstart
+            if (isIOS()) {
+                tab.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    switchDay(tab.dataset.day);
+                }, { passive: false });
+            }
+        });
+        
+        // Обработка событий для мероприятий и модального окна
+        document.addEventListener(isIOS() ? 'touchstart' : 'click', function(e) {
+            // Проверяем, было ли касание/клик по кликабельному мероприятию
+            const eventItem = e.target.closest('.event-item.clickable');
+            if (eventItem) {
+                // Получаем данные
+                const title = eventItem.dataset.title;
+                const time = eventItem.dataset.time;
+                const place = eventItem.dataset.place;
+                const speaker = eventItem.dataset.speaker;
+                
+                // Заполняем модальное окно
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-time').textContent = time;
+                document.getElementById('modal-place').textContent = place;
+                
+                // Проверяем наличие спикера
+                const speakerInfo = document.getElementById('speaker-info');
+                if (speaker) {
+                    document.getElementById('modal-speaker').textContent = speaker;
+                    speakerInfo.style.display = 'block';
+                } else {
+                    speakerInfo.style.display = 'none';
+                }
+                
+                // Показываем модальное окно
+                document.getElementById('eventModal').classList.add('active');
+                
+                // Предотвращаем дальнейшее распространение события
+                e.stopPropagation();
+                return;
+            }
+            
+            // Закрытие модального окна при клике на крестик или оверлей
+            if (e.target.classList.contains('modal-close') || 
+                e.target.classList.contains('modal-overlay') || 
+                e.target === document.getElementById('eventModal')) {
+                document.getElementById('eventModal').classList.remove('active');
+            }
+        });
+        
+        // Обработка клика по кнопке закрытия
+        document.querySelector('.modal-close').addEventListener('click', () => {
+            document.getElementById('eventModal').classList.remove('active');
+        });
+        
+        // Закрытие модального окна при нажатии Esc
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('eventModal').classList.remove('active');
+            }
+        });
+        
+        // Дополнительный обработчик для закрытия по тапу вне окна
+        document.getElementById('eventModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('eventModal')) {
+                document.getElementById('eventModal').classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
