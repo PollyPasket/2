@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чистые родники Ростова</title>
+    
+    <!-- Подключение API Яндекс Карт -->
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=ваш_ключ_API&lang=ru_RU" type="text/javascript"></script>
+    
+    <!-- Подключение шрифтов -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 123, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #546e7a;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .map-container {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        #map {
+            width: 100%;
+            height: 700px;
+        }
+        
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+        }
+        
+        .legend h3 {
+            font-family: 'Montserrat', sans-serif;
+            margin-bottom: 15px;
+            color: #1e88e5;
+            font-size: 1.1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .balloon-content {
+            max-width: 400px;
+            padding: 0;
+        }
+        
+        .spring-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #1e88e5;
+            padding: 20px 20px 0;
+        }
+        
+        .spring-status {
+            margin: 0 20px 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .status-green { 
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        .status-yellow { 
+            background: linear-gradient(135deg, #FFC107 0%, #ffb300 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        .status-red { 
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+        .status-unknown { 
+            background: linear-gradient(135deg, #9E9E9E 0%, #757575 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(158, 158, 158, 0.3);
+        }
+        
+        .spring-photos {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 0 20px 20px;
+        }
+        
+        .spring-photo {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .spring-photo:hover {
+            transform: scale(1.05);
+            border-color: #1e88e5;
+            box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+        }
+        
+        .water-drop {
+            transition: all 0.3s ease;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #546e7a;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .legend {
+                position: static;
+                margin-bottom: 20px;
+            }
+            
+            #map {
+                height: 500px;
+            }
+            
+            .spring-photos {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Чистые родники Ростова</h1>
+            <p>Интерактивная карта для мониторинга и сохранения природных источников города</p>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <div class="legend">
+                <h3>Состояние родников</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);"></div>
+                    <span>Хорошее</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #FFC107 0%, #ffb300 100%);"></div>
+                    <span>Среднее</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);"></div>
+                    <span>Плохое</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #9E9E9E 0%, #757575 100%);"></div>
+                    <span>Неизвестно</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Проект "Чистые родники Ростова" • 2025</p>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        ymaps.ready(init);
+        
+        function init() {
+            var map = new ymaps.Map('map', {
+                center: [47.23, 39.72],
+                zoom: 11,
+                controls: ['zoomControl', 'fullscreenControl']
+            });
+            
+            // Функция для создания SVG капли с заданным цветом
+            function createDropSVG(color) {
+                return `data:image/svg+xml;base64,${btoa(`
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 3.75C15 3.75 9 10.5 9 15.75C9 19.477 12.023 22.5 15.75 22.5C19.477 22.5 22.5 19.477 22.5 15.75C22.5 10.5 16.5 3.75 16.5 3.75H15Z" 
+                              fill="${color}" stroke="white" stroke-width="2"/>
+                    </svg>
+                `)}`;
+            }
+            
+            // Цвета для разных состояний
+            const statusColors = {
+                'green': '#4CAF50',
+                'yellow': '#FFC107', 
+                'red': '#f44336',
+                'unknown': '#9E9E9E'
+            };
+            
+            const defaultColor = '#1e88e5'; // Синий цвет по умолчанию
+            
+            // Данные о родниках
+            var springs = [
+                {
+                    coords: [47.308333, 39.803056],
+                    name: 'Родник у Ростовского моря',
+                    status: 'yellow',
+                    statusText: 'Среднее состояние',
+                    photos: [
+                        {src: 'photos/spring1/photo1.jpg'},
+                        {src: 'photos/spring1/photo2.jpg'},
+                        {src: 'photos/spring1/photo3.jpg'}
+                    ]
+                },
+                {
+                    coords: [47.246944, 39.752778],
+                    name: 'Исток ручья Безымянный',
+                    status: 'red',
+                    statusText: 'Плохое состояние',
+                    photos: [
+                        {src: 'photos/spring2/photo1.jpg'},
+                        {src: 'photos/spring2/photo2.jpg'},
+                        {src: 'photos/spring2/photo3.jpg'}
+                    ]
+                },
+                {
+                    coords: [47.290556, 39.723056],
+                    name: 'Ключ Салых-Су',
+                    status: 'yellow',
+                    statusText: 'Среднее состояние',
+                    photos: [
+                        {src: 'photos/spring3/photo1.jpg'},
+                        {src: 'photos/spring3/photo2.jpg'},
+                        {src: 'photos/spring3/photo3.jpg'}
+                    ]
+                },
+                {
+                    coords: [47.264444, 39.699444],
+                    name: 'Ключ реки Темерник',
+                    status: 'red',
+                    statusText: 'Плохое состояние',
+                    photos: [
+                        {src: 'photos/spring4/photo1.jpg'},
+                        {src: 'photos/spring4/photo2.jpg'},
+                        {src: 'photos/spring4/photo3.jpg'}
+                    ]
+                },
+                {
+                    coords: [47.206389, 39.693333],
+                    name: 'Родник Гремучка',
+                    status: 'green',
+                    statusText: 'Хорошее состояние',
+                    photos: [
+                        {src: 'photos/spring5/photo1.jpg'},
+                        {src: 'photos/spring5/photo2.jpg'},
+                        {src: 'photos/spring5/photo3.jpg'}
+                    ]
+                },
+                {
+                    coords: [47.216667, 39.723056],
+                    name: 'Городищенский родник',
+                    status: 'yellow',
+                    statusText: 'Среднее состояние',
+                    photos: [
+                        {src: 'photos/spring6/photo1.jpg'},
+                        {src: 'photos/spring6/photo2.jpg'},
+                        {src: 'photos/spring6/photo3.jpg'}
+                    ]
+                },
+                {
+                    coords: [47.225833, 39.795278],
+                    name: 'Ключ Красный Аксай',
+                    status: 'unknown',
+                    statusText: 'Неизвестно',
+                    photos: [
+                        {src: 'photos/spring7/photo1.jpg'},
+                        {src: 'photos/spring7/photo2.jpg'},
+                        {src: 'photos/spring7/photo3.jpg'}
+                    ]
+                },
+                {
+                    coords: [47.283333, 39.785278],
+                    name: 'Ключ Первомайский',
+                    status: 'yellow',
+                    statusText: 'Среднее состояние',
+                    photos: [
+                        {src: 'photos/spring8/photo1.jpg'},
+                        {src: 'photos/spring8/photo2.jpg'},
+                        {src: 'photos/spring8/photo3.jpg'}
+                    ]
+                }
+            ];
+            
+            // Создаем метки для каждого родника
+            springs.forEach(function(spring, index) {
+                // Создаем метку с синей каплей по умолчанию
+                var placemark = new ymaps.Placemark(spring.coords, {
+                    balloonContentHeader: spring.name,
+                    balloonContentBody: createBalloonContent(spring)
+                }, {
+                    iconLayout: 'default#image',
+                    iconImageHref: createDropSVG(defaultColor),
+                    iconImageSize: [30, 30],
+                    iconImageOffset: [-15, -15],
+                    hasBalloon: true
+                });
+                
+                // Сохраняем цвет статуса в свойствах метки
+                placemark.properties.set('statusColor', statusColors[spring.status]);
+                
+                // Обработчики для смены цвета при наведении
+                placemark.events.add('mouseenter', function() {
+                    placemark.options.set('iconImageHref', createDropSVG(placemark.properties.get('statusColor')));
+                });
+                
+                placemark.events.add('mouseleave', function() {
+                    placemark.options.set('iconImageHref', createDropSVG(defaultColor));
+                });
+                
+                map.geoObjects.add(placemark);
+            });
+            
+            // Функция для создания содержимого балуна
+            function createBalloonContent(spring) {
+                var content = '<div class="balloon-content">';
+                content += '<div class="spring-name">' + spring.name + '</div>';
+                content += '<div class="spring-status status-' + spring.status + '">' + spring.statusText + '</div>';
+                content += '<div class="spring-photos">';
+                
+                spring.photos.forEach(function(photo, index) {
+                    content += '<img src="' + photo.src + '" alt="Фото ' + (index + 1) + '" class="spring-photo">';
+                });
+                
+                content += '</div></div>';
+                return content;
+            }
+        }
+    </script>
+</body>
+</html>
